@@ -1,0 +1,44 @@
+/* Tailwind v4 is CSS-first — there's no tailwind.config.ts. Design tokens
+   live here, in @theme, and Tailwind generates matching utilities
+   (bg-paper, text-ink, border-line, font-serif, ...) automatically. */
+@import "tailwindcss";
+@plugin "@tailwindcss/typography";
+
+@theme {
+  /* --- palette: quiet and official, not another cream+terracotta AI
+     default. "paper" for the calm background, "ink" for body text, "seal"
+     as the one considered accent (a case-file, not a chat-bubble). --- */
+  --color-paper: #f7f6f3;
+  --color-ink: #1b1e24;
+  --color-seal: #2e4f5c;
+  --color-muted: #767b85;
+  --color-line: #e2dfd9;
+  --color-flag: #a2403d; /* rejected / error */
+  --color-moss: #4b6b4e; /* resolved / success */
+
+  /* --- type: a serif for headings (case-file gravitas), IBM Plex Sans for
+     body copy, IBM Plex Mono for tracking codes specifically — set as CSS
+     variables by next/font in app/layout.tsx, referenced here. --- */
+  --font-display: var(--font-display-raw), ui-serif, Georgia, serif;
+  --font-sans: var(--font-body-raw), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-code-raw), ui-monospace, SFMono-Regular, monospace;
+
+  --tracking-widest2: 0.2em;
+}
+
+body {
+  font-family: var(--font-sans);
+}
+
+/* Keyboard focus must stay visible — this app is explicitly meant to work
+   for people relying on Tor Browser / keyboard-only navigation. */
+:focus-visible {
+  outline: 2px solid var(--color-seal);
+  outline-offset: 2px;
+}
+
+@media print {
+  .print\:hidden {
+    display: none !important;
+  }
+}
