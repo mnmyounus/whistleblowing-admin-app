@@ -121,16 +121,32 @@ function AdminSetup({ onKeyReady }: { onKeyReady: (key: CryptoKey, bundle: Encry
   const [confirm, setConfirm] = useState('');
   const [publicJwk, setPublicJwk] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   async function create() {
     if (passphrase.length < 12 || passphrase !== confirm) return;
     setBusy(true);
-    const { publicKey, privateKey } = await generateAdminKeypair();
-    const bundle = await lockPrivateKeyWithPassphrase(privateKey, passphrase);
-    const jwk = await exportPublicKeyJwk(publicKey);
-    setPublicJwk(JSON.stringify(jwk));
-    onKeyReady(privateKey, bundle);
-    setBusy(false);
+    setError(null);
+    try {
+      const { publicKey, privateKey } = await generateAdminKeypair();
+      const bundle = await lockPrivateKeyWithPassphrase(privateKey, passphrase);
+      const jwk = await exportPublicKeyJwk(publicKey);
+      setPublicJwk(JSON.stringify(jwk));
+      // onKeyReady writes to IndexedDB (see AdminDashboard) — if THAT throws
+      // (storage quota, private-browsing restrictions, etc.), the JWK above
+      // has already been generated and shown, so it isn't lost even if the
+      // save-locally step fails; the error below tells you specifically
+      // that part didn't complete.
+      await onKeyReady(privateKey, bundle);
+    } catch (e) {
+      setError(
+        e instanceof Error
+          ? `Could not generate or save the key: ${e.message}`
+          : 'Could not generate or save the key — unknown error.'
+      );
+    } finally {
+      setBusy(false);
+    }
   }
 
   return (
@@ -162,6 +178,7 @@ function AdminSetup({ onKeyReady }: { onKeyReady: (key: CryptoKey, bundle: Encry
       >
         {busy ? 'Generating…' : 'Generate keypair'}
       </button>
+      {error && <p className="text-sm text-flag">{error}</p>}
       {publicJwk && (
         <div className="rounded-lg border border-amber-300 bg-amber-50 p-3 text-sm">
           <p className="mb-2 font-medium">
